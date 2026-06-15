@@ -21,7 +21,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-st.markdown('<h1 class="main-title">📸 NHẬN DIỆN KHUÔN MẶT THÀNH VIÊN</h1>', unsafe_allow_html=True)
+st.markdown('<h1 class="main-title">NHẬN DIỆN KHUÔN MẶT THÀNH VIÊN</h1>', unsafe_allow_html=True)
 
 # Display persistent success messages if they exist in session state
 if 'success_message' in st.session_state:
@@ -36,7 +36,7 @@ if 'engine' not in st.session_state:
 engine = st.session_state.engine
 
 # Tabs
-tab1, tab2, tab3 = st.tabs(["🔍 Nhận Diện Face", "👥 Danh Sách Thành Viên", "➕ Đăng Ký Mới"])
+tab1, tab2, tab3 = st.tabs(["Nhận Diện Face", "Danh Sách Thành Viên", "Đăng Ký Mới"])
 
 # ==========================================
 # TAB 1: RECOGNITION
@@ -120,7 +120,7 @@ with tab2:
             images = [f.name for f in member_dir.iterdir() if f.is_file() and f.suffix.lower() in ('.png', '.jpg', '.jpeg')]
             
             with st.container():
-                st.markdown(f"### 👥 {member}")
+                st.markdown(f"### {member}")
                 if len(images) > 0:
                     cols = st.columns(min(len(images), 5))
                     for idx, img_name in enumerate(sorted(images)):

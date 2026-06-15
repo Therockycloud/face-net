@@ -1,4 +1,4 @@
-# 📸 Ứng Dụng Nhận Diện Khuôn Mặt Thành Viên Nhóm (Streamlit + FaceNet)
+# Ứng Dụng Nhận Diện Khuôn Mặt Thành Viên Nhóm (Streamlit + FaceNet)
 
 Ứng dụng nhận diện khuôn mặt cục bộ sử dụng mô hình pre-trained **InceptionResnetV1** (FaceNet) từ thư viện `facenet-pytorch` để trích xuất đặc trưng (embedding 512 chiều) và so khớp độ tương đồng Cosine. Hệ thống hoạt động theo cơ chế Face Embedding (nhận diện nhanh mà không cần huấn luyện lại từ đầu) và hỗ trợ lưu trữ nhiều ảnh mẫu (nhiều góc mặt) cho mỗi thành viên.
 
@@ -6,14 +6,14 @@ Giao diện đồ họa được thiết kế bằng **Streamlit** với tông m
 
 ---
 
-## 🛠️ Tính năng chính
-1. **🔍 Nhận Diện Face**: Cho phép tải ảnh lên (`st.file_uploader`) hoặc chụp trực tiếp qua Webcam (`st.camera_input`). Nhận diện và vẽ khung bao (bounding box) kèm tên thành viên và phần trăm độ tin cậy.
-2. **👥 Danh Sách Thành Viên**: Hiển thị lưới hình ảnh của các thành viên đã lưu trong cơ sở dữ liệu và cho phép xoá thành viên.
-3. **➕ Đăng Ký Mới**: Nhập tên thành viên mới, chụp ảnh webcam hoặc tải ảnh chân dung lên. Hệ thống sẽ tự động kiểm tra xem ảnh có chứa **đúng 1 khuôn mặt** hay không trước khi đồng ý lưu.
+## Tính năng chính
+1. **Nhận Diện Face**: Cho phép tải ảnh lên (`st.file_uploader`) hoặc chụp trực tiếp qua Webcam (`st.camera_input`). Nhận diện và vẽ khung bao (bounding box) kèm tên thành viên và phần trăm độ tin cậy.
+2. **Danh Sách Thành Viên**: Hiển thị lưới hình ảnh của các thành viên đã lưu trong cơ sở dữ liệu và cho phép xoá thành viên.
+3. **Đăng Ký Mới**: Nhập tên thành viên mới, chụp ảnh webcam hoặc tải ảnh chân dung lên. Hệ thống sẽ tự động kiểm tra xem ảnh có chứa **đúng 1 khuôn mặt** hay không trước khi đồng ý lưu.
 
 ---
 
-## 📂 Cấu trúc Cơ sở dữ liệu Cục bộ
+## Cấu trúc Cơ sở dữ liệu Cục bộ
 Dữ liệu thành viên được lưu trực tiếp dưới dạng thư mục trong máy của bạn:
 ```text
 data/
@@ -28,7 +28,7 @@ data/
 
 ---
 
-## 🚀 Cách Chạy Ứng Dụng
+## Cách Chạy Ứng Dụng
 
 ### Cách 1: Chạy trực tiếp bằng Python/Conda (Khuyên dùng khi Dev)
 
@@ -74,7 +74,7 @@ Docker giúp bạn chạy ứng dụng mà không cần cài đặt Python, PyTo
 
 ---
 
-## 💡 Lưu ý khi sử dụng bộ ảnh mẫu
+## Lưu ý khi sử dụng bộ ảnh mẫu
 Để hệ thống nhận diện tốt nhất:
 - **Đăng ký**: Khi đăng ký thành viên mới, hãy chọn ảnh **trực diện, đủ sáng, rõ mặt** làm ảnh đầu tiên.
 - **Tăng độ nhạy**: Bạn có thể vào tab **Đăng Ký Mới**, gõ lại đúng tên thành viên cũ và chụp/upload thêm ảnh góc nghiêng của họ. Hệ thống sẽ tự động lưu thêm ảnh mẫu vào thư mục của họ mà không ghi đè ảnh cũ.
