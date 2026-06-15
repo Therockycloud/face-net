@@ -1,23 +1,59 @@
-# 📊 Ứng Dụng Nhận Diện Khuôn Mặt Thành Viên Nhóm
+# Face Recognition Streamlit Dashboard
 
-Ứng dụng nhận diện khuôn mặt cục bộ hiệu năng cao sử dụng thư viện **Streamlit** làm giao diện điều khiển và **FaceNet (InceptionResnetV1)** từ `facenet-pytorch` làm bộ trích xuất đặc trưng (embedding 512 chiều). 
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.12-blue.svg?style=flat-square&logo=python&logoColor=white" alt="Python Version" />
+  <img src="https://img.shields.io/badge/PyTorch-EE4C2C?style=flat-square&logo=pytorch&logoColor=white" alt="PyTorch" />
+  <img src="https://img.shields.io/badge/Streamlit-FF4B4B?style=flat-square&logo=streamlit&logoColor=white" alt="Streamlit" />
+  <img src="https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker" />
+  <img src="https://img.shields.io/badge/License-MIT-green.svg?style=flat-square" alt="License" />
+</p>
 
-Hệ thống hoạt động theo cơ chế **Face Embedding** (nhận diện qua so sánh khoảng cách đặc trưng vector) nên không cần huấn luyện lại mô hình khi thêm người mới, hỗ trợ đăng ký nhiều góc mặt để tăng độ chính xác và bảo mật.
-
----
-
-## 🌟 Tính năng nổi bật
-
-- **Nhận diện trực quan**: Cho phép chụp trực tiếp từ Webcam hoặc tải tệp ảnh lên. Tự động vẽ khung bounding box và gán nhãn tên kèm phần trăm độ tin cậy.
-- **Quy trình đăng ký 5 góc mặt**: Dẫn dắt người dùng chụp 5 góc mặt mẫu qua camera (Nhìn thẳng, Quay trái, Quay phải, Ngẩng lên, Cúi xuống) để nhận diện nhạy hơn ở mọi tư thế.
-- **Tải tệp hàng loạt**: Cho phép kéo thả cùng lúc nhiều ảnh mẫu của thành viên. Hệ thống tự động xác minh từng ảnh chứa đúng 1 khuôn mặt trước khi lưu.
-- **Giao diện Light Mode Cyan/Green**: Tông màu Cyan chủ đạo và Green dịu mắt, tối giản và cực kỳ hiện đại.
-- **Quản lý dữ liệu trực tiếp**: Xem thư viện ảnh đã lưu của từng thành viên và xóa dữ liệu trực quan ngay trên giao diện.
+Một giải pháp nhận diện khuôn mặt cục bộ (On-premise Face Recognition) hoàn chỉnh, hiệu năng cao được xây dựng trên nền tảng **PyTorch**, **Streamlit** và mô hình **FaceNet (InceptionResnetV1)**. Hệ thống cho phép nhận diện các thành viên trong nhóm trực tiếp qua Webcam hoặc file ảnh tải lên mà không cần huấn luyện lại mô hình (Zero-Shot Learning).
 
 ---
 
-## 📂 Cơ sở dữ liệu Cục bộ
-Dữ liệu khuôn mặt được tổ chức đơn giản và an toàn trong thư mục máy tính của bạn:
+## 📌 Mục lục
+1. [Tính Năng Chính](#-tính-năng-chính)
+2. [Nguyên Lý Hoạt Động](#-nguyên-lý-hoạt-động)
+3. [Cấu Trúc Thư Mục Dữ Liệu](#-cấu-trúc-thư-mục-dữ-liệu)
+4. [Hướng Dẫn Cài Đặt Nhanh](#-hướng-dẫn-cài-đặt-nhanh)
+5. [Đóng Gói với Docker](#-đóng-gói-với-docker)
+6. [Quản Lý Mã Nguồn Git](#-quản-lý-mã-nguồn-git)
+7. [Kiểm Thử (Unit Tests)](#-kiểm-thử-unit-tests)
+8. [Giấy Phép](#-giấy-phép)
+
+---
+
+## 🛠️ Tính năng chính
+
+* **Nhận diện thời gian thực (Real-time Inference)**: Quét và nhận diện khuôn mặt trực tiếp qua Webcam hoặc qua tệp tải lên. Tự động vẽ khung bounding box và gắn tên nhãn kèm độ tin cậy.
+* **Quy trình đăng ký 5 góc mặt chuẩn hóa (Guided Capture)**: Trình hướng dẫn webcam tự động dẫn dắt người dùng qua 5 góc mặt (Chính diện, Quay trái, Quay phải, Ngẩng lên, Cúi xuống) để tối ưu hóa góc nhận dạng của camera.
+* **Tải lên hàng loạt (Bulk Upload)**: Kéo thả nhiều ảnh cùng lúc, hệ thống tự động xác minh từng ảnh chứa đúng 1 khuôn mặt trước khi nạp vào bộ nhớ.
+* **Quản lý dữ liệu trực quan**: Xem hình ảnh mẫu của từng người dùng và thực hiện thao tác xóa dữ liệu trực tiếp trên bảng điều khiển.
+* **Light Mode UI tối giản**: Thiết kế giao diện hiện đại theo chuẩn màu Cyan/Green thân thiện, chuyên nghiệp.
+
+---
+
+## 🧠 Nguyên lý hoạt động
+
+Ứng dụng sử dụng pipeline xử lý ảnh 3 giai đoạn được tối ưu hóa hiệu năng (chỉ chạy mô hình mạng neural một lần duy nhất per photo):
+
+```mermaid
+flowchart TD
+    A[Ảnh đầu vào / Webcam Frame] --> B[Bộ phát hiện MTCNN]
+    B -->|Kiểm tra face_count == 1| C[Cắt & Chuẩn hóa 160x160]
+    B -->|face_count != 1| D[Báo lỗi / Yêu cầu chụp lại]
+    C --> E[InceptionResnetV1 Extractor]
+    E -->|Trích xuất Vector 512-D| F[Tính Cosine Similarity với Cache]
+    F -->|Similarity >= 0.60| G[Nhận diện: Tên thành viên]
+    F -->|Similarity < 0.60| H[Gán nhãn: Unknown]
+```
+
+---
+
+## 📂 Cấu trúc thư mục dữ liệu
+
+Dữ liệu khuôn mặt của thành viên được lưu dưới dạng ảnh mẫu cục bộ:
 ```text
 data/
 └── registered_faces/
@@ -28,70 +64,97 @@ data/
     └── TranThiB/
         └── 1718432380789.png
 ```
-> [!NOTE]
-> Để tăng độ nhạy nhận diện khi camera đặt lệch góc, hãy đăng ký đủ các góc mặt (thẳng, trái, phải, lên, xuống) của thành viên.
+Hệ thống tự động nạp toàn bộ ảnh mẫu này vào bộ nhớ đệm (RAM Cache) dưới dạng vector đặc trưng khi khởi động hoặc reload, giúp việc so khớp diễn ra với độ trễ gần như bằng 0.
 
 ---
 
-## 🚀 Hướng Dẫn Chạy & Cài Đặt
+## 💻 Hướng dẫn cài đặt nhanh
 
-### 1. Chạy trực tiếp bằng Python / Conda
+### 1. Cài đặt môi trường Python (3.12+)
+Khuyên dùng môi trường ảo `conda` hoặc `venv`.
 
-Yêu cầu môi trường có cài đặt Python 3.12+ (khuyên dùng Miniforge hoặc Anaconda).
+```bash
+# Cài đặt các thư viện phụ thuộc
+pip install -r requirements.txt
+```
 
-* **Cài đặt thư viện**:
-  ```bash
-  pip install -r requirements.txt
-  ```
-
-* **Khởi động ứng dụng**:
-  ```bash
-  streamlit run app.py
-  ```
-  *(Ứng dụng sẽ tự động mở trên trình duyệt tại: `http://localhost:8501`)*
-
-* **Chạy bộ kiểm thử (pytest)**:
-  ```bash
-  pytest test_face_engine.py -v
-  ```
+### 2. Khởi động Streamlit Dashboard
+```bash
+streamlit run app.py
+```
+Ứng dụng sẽ tự động mở trên trình duyệt của bạn tại địa chỉ: `http://localhost:8501`.
 
 ---
 
-### 2. Sử dụng Docker (Khuyên dùng cho triển khai nhanh)
+## 🐳 Đóng gói với Docker
 
-Docker giúp đóng gói và chạy ứng dụng mà không cần cấu hình Python hay cài đặt thư viện trên máy của bạn.
+Sử dụng Docker giúp ứng dụng chạy cô lập, không phụ thuộc vào thư viện trên máy chủ của bạn.
 
-* **Build Docker Image**:
-  ```bash
-  docker build -t face-rec-app .
-  ```
+### 1. Build Docker Image
+```bash
+docker build -t face-rec-app .
+```
 
-* **Khởi động Container**:
-  Gắn thư mục dữ liệu `data` ra ngoài máy vật lý để lưu trữ dữ liệu vĩnh viễn:
-  ```bash
-  docker run -d -p 8501:8501 -v "$(pwd)/data:/app/data" --name face-rec-container face-rec-app
-  ```
-  *(Truy cập giao diện tại: `http://localhost:8501`)*
+### 2. Khởi động Container (Mount Volume lưu dữ liệu)
+```bash
+docker run -d -p 8501:8501 -v "$(pwd)/data:/app/data" --name face-rec-container face-rec-app
+```
 
-* **Tạm dừng / Dừng Container**:
-  Khi không sử dụng nữa, bạn có thể tạm dừng container:
-  ```bash
-  docker stop face-rec-container
-  ```
+### 3. Các lệnh điều khiển Container
+```bash
+# Tạm dừng container
+docker stop face-rec-container
 
-* **Chạy lại Container**:
-  Để khởi chạy lại container đã dừng trước đó:
-  ```bash
-  docker start face-rec-container
-  ```
+# Khởi chạy lại container đã dừng
+docker start face-rec-container
 
-* **Xóa Container**:
-  Nếu bạn muốn gỡ bỏ hoàn toàn container (không ảnh hưởng đến ảnh mẫu đã lưu trong thư mục `data` cục bộ):
-  ```bash
-  docker stop face-rec-container && docker rm face-rec-container
-  ```
+# Xóa bỏ container hoàn toàn (không ảnh hưởng dữ liệu data mẫu)
+docker stop face-rec-container && docker rm face-rec-container
+```
 
 ---
 
-> [!WARNING]
-> **Độ bảo mật**: Hệ thống đã được tích hợp bộ lọc chống tấn công ghi đè và duyệt ngược thư mục (Path Traversal) qua tên đăng ký. Tuy nhiên, hãy đảm bảo rằng tên thành viên chỉ chứa các ký tự chữ cái không dấu, số, hoặc dấu gạch ngang/gạch dưới để hệ thống hoạt động ổn định nhất.
+## 🐙 Quản lý mã nguồn Git
+
+Để đồng bộ dự án lên GitHub cá nhân của bạn:
+
+```bash
+# 1. Thêm tất cả file vào staging
+git add .
+
+# 2. Tạo commit
+git commit -m "feat: complete face recognition dashboard with guided 5-angle capture"
+
+# 3. Liên kết tới kho chứa từ xa
+git remote add origin https://github.com/Therockycloud/face-net
+
+# 4. Đẩy mã nguồn lên nhánh main (Force-push nếu cần ghi đè)
+git branch -M main
+git push -f -u origin main
+```
+
+> [!IMPORTANT]
+> Dự án đã cấu hình sẵn `.gitignore` để bỏ qua các thư mục cache của python (`__pycache__/`), pytest (`.pytest_cache/`), thư mục test tạm thời (`test_data/`) và thư mục tài liệu thiết kế (`docs/`).
+
+---
+
+## 🧪 Kiểm thử (Unit Tests)
+
+Dự án sử dụng `pytest` kết hợp với fixture `tmp_path` để chạy kiểm thử cô lập hoàn toàn cho Face Engine:
+
+```bash
+pytest test_face_engine.py -v
+```
+
+Kết quả kiểm thử bao gồm các bài test về:
+* Tạo thư mục tự động
+* Trích xuất embedding 512 chiều
+* Tính khoảng cách cosine
+* Bảo mật chống tấn công Path Traversal
+* Khớp ảnh mẫu và cập nhật Cache tăng tốc
+
+---
+
+## 📄 Giấy phép
+
+Phân phối dưới giấy phép **MIT License**. Xem chi tiết tại tệp `LICENSE` nếu có.
