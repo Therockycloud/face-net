@@ -13,17 +13,16 @@ Một giải pháp nhận diện khuôn mặt cục bộ (On-premise Face Recogn
 ---
 
 ## 📌 Mục lục
-1. [Tính Năng Chính](#-tính-năng-chính)
-2. [Nguyên Lý Hoạt Động](#-nguyên-lý-hoạt-động)
-3. [Cấu Trúc Thư Mục Dữ Liệu](#-cấu-trúc-thư-mục-dữ-liệu)
+1. [Tính Năng Chính](#tính-năng-chính)
+2. [Nguyên Lý Hoạt Động](#nguyên-lý-hoạt-động)
+3. [Cấu Trúc Thư Mục Dữ Liệu](#cấu-trúc-thư-mục-dữ-liệu)
 4. [Hướng Dẫn Cài Đặt Nhanh](#-hướng-dẫn-cài-đặt-nhanh)
 5. [Đóng Gói với Docker](#-đóng-gói-với-docker)
-6. [Kiểm Thử (Unit Tests)](#-kiểm-thử-unit-tests)
-7. [Giấy Phép](#-giấy-phép)
+6. [Kiểm Thử (Unit Tests)](#kiểm-thử-unit-tests)
 
 ---
 
-## 🛠️ Tính năng chính
+## Tính năng chính
 
 * **Nhận diện thời gian thực (Real-time Inference)**: Quét và nhận diện khuôn mặt trực tiếp qua Webcam hoặc qua tệp tải lên. Tự động vẽ khung bounding box và gắn tên nhãn kèm độ tin cậy.
 * **Quy trình đăng ký 5 góc mặt chuẩn hóa (Guided Capture)**: Trình hướng dẫn webcam tự động dẫn dắt người dùng qua 5 góc mặt (Chính diện, Quay trái, Quay phải, Ngẩng lên, Cúi xuống) để tối ưu hóa góc nhận dạng của camera.
@@ -33,7 +32,7 @@ Một giải pháp nhận diện khuôn mặt cục bộ (On-premise Face Recogn
 
 ---
 
-## 🧠 Nguyên lý hoạt động
+## Nguyên lý hoạt động
 
 Ứng dụng sử dụng pipeline xử lý ảnh 3 giai đoạn được tối ưu hóa hiệu năng (chỉ chạy mô hình mạng neural một lần duy nhất per photo):
 
@@ -50,7 +49,7 @@ flowchart TD
 
 ---
 
-## 📂 Cấu trúc thư mục dữ liệu
+## Cấu trúc thư mục dữ liệu
 
 Dữ liệu khuôn mặt của thành viên được lưu dưới dạng ảnh mẫu cục bộ:
 ```text
@@ -113,7 +112,7 @@ docker stop face-rec-container && docker rm face-rec-container
 
 ---
 
-## 🧪 Kiểm thử (Unit Tests)
+## Kiểm thử (Unit Tests)
 
 Dự án sử dụng `pytest` kết hợp với fixture `tmp_path` để chạy kiểm thử cô lập hoàn toàn cho Face Engine:
 
@@ -128,8 +127,3 @@ Kết quả kiểm thử bao gồm các bài test về:
 * Bảo mật chống tấn công Path Traversal
 * Khớp ảnh mẫu và cập nhật Cache tăng tốc
 
----
-
-## 📄 Giấy phép
-
-Phân phối dưới giấy phép **MIT License**. Xem chi tiết tại tệp `LICENSE` nếu có.
