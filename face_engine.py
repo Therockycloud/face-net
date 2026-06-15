@@ -5,6 +5,8 @@ from pathlib import Path
 from typing import Any, Dict, Tuple, Union, List, Optional
 from PIL import Image
 from facenet_pytorch import MTCNN, InceptionResnetV1
+import shutil
+import time
 
 class FaceRecognitionEngine:
     """Engine for face recognition operations, including registration and cache management."""
@@ -26,6 +28,7 @@ class FaceRecognitionEngine:
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
         ])
+        self.load_db()
 
     def detect_face(self, pil_image: Image.Image) -> Tuple[Optional[Image.Image], Optional[List[int]]]:
         """
@@ -78,5 +81,99 @@ class FaceRecognitionEngine:
             The cosine similarity score as a float.
         """
         return F.cosine_similarity(emb1.unsqueeze(0).cpu(), emb2.unsqueeze(0).cpu()).item()
+
+    def load_db(self) -> None:
+        """
+        Scans self.db_dir, extracts embeddings for all images, and updates self.cache.
+        """
+        self.cache = {}
+        if not self.db_dir.exists():
+            return
+        
+        for member_dir in self.db_dir.iterdir():
+            if not member_dir.is_dir():
+                continue
+            
+            name = member_dir.name
+            embeddings = []
+            for img_path in member_dir.iterdir():
+                if img_path.is_file() and img_path.suffix.lower() in ('.png', '.jpg', '.jpeg'):
+                    try:
+                        with Image.open(img_path) as img:
+                            rgb_img = img.convert('RGB')
+                            cropped_resized = rgb_img.resize((160, 160), Image.Resampling.LANCZOS)
+                            emb = self.get_embedding(cropped_resized)
+                            embeddings.append(emb)
+                    except Exception as e:
+                        print(f"Error loading {img_path}: {e}")
+            
+            if embeddings:
+                self.cache[name] = embeddings
+
+    def register_member(self, name: str, cropped_face_img: Image.Image) -> bool:
+        """
+        Saves cropped face image to database directory and updates the cache.
+        """
+        safe_name = Path(name).name.strip()
+        if not safe_name or safe_name in (".", ".."):
+            return False
+        
+        member_dir = self.db_dir / safe_name
+        member_dir.mkdir(parents=True, exist_ok=True)
+        
+        filename = f"{int(time.time() * 1000)}.png"
+        file_path = member_dir / filename
+        
+        try:
+            cropped_face_img.save(file_path)
+        except Exception as e:
+            print(f"Error saving image for {safe_name}: {e}")
+            return False
+        
+        emb = self.get_embedding(cropped_face_img)
+        if safe_name not in self.cache:
+            self.cache[safe_name] = []
+        self.cache[safe_name].append(emb)
+        return True
+
+    def delete_member(self, name: str) -> None:
+        """
+        Removes a member's folder from the disk and updates the cache.
+        """
+        safe_name = Path(name).name.strip()
+        if not safe_name or safe_name in (".", ".."):
+            return
+        
+        member_dir = self.db_dir / safe_name
+        if member_dir.exists() and member_dir.is_dir():
+            shutil.rmtree(member_dir)
+        
+        if safe_name in self.cache:
+            del self.cache[safe_name]
+
+    def recognize_face(self, cropped_face_img: Image.Image, threshold: float = 0.60) -> Tuple[str, float]:
+        """
+        Compares query cropped face with all embeddings in cache.
+        Returns:
+            name: Matched member name or "Unknown"
+            best_score: Highest cosine similarity score
+        """
+        if not self.cache:
+            return "Unknown", -1.0
+        
+        query_emb = self.get_embedding(cropped_face_img)
+        best_name = "Unknown"
+        best_score = -1.0
+        
+        for name, embeddings in self.cache.items():
+            for ref_emb in embeddings:
+                score = self.compute_similarity(query_emb, ref_emb)
+                if score > best_score:
+                    best_score = score
+                    if score >= threshold:
+                        best_name = name
+                        
+        return best_name, best_score
+
 
 

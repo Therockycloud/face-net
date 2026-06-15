@@ -35,3 +35,60 @@ def test_cosine_similarity(tmp_path: Path) -> None:
     assert abs(engine.compute_similarity(v1, v3) - 0.0) < 1e-5
 
 
+def test_register_and_load_and_delete_member(tmp_path: Path) -> None:
+    engine = FaceRecognitionEngine(db_dir=tmp_path)
+    
+    # Assert database starts empty
+    engine.load_db()
+    assert len(engine.cache) == 0
+    
+    # Save a fake face image
+    dummy_face = Image.fromarray(np.random.randint(0, 255, (160, 160, 3), dtype=np.uint8))
+    
+    # Recognize face when cache is empty
+    name, score = engine.recognize_face(dummy_face, threshold=0.5)
+    assert name == "Unknown"
+    assert score == -1.0
+    
+    # Register member
+    success = engine.register_member("UserA", dummy_face)
+    assert success is True
+    assert (tmp_path / "UserA").exists()
+    
+    # Reload and assert cached
+    engine.load_db()
+    assert "UserA" in engine.cache
+    assert len(engine.cache["UserA"]) == 1
+    
+    # Recognize face
+    name, score = engine.recognize_face(dummy_face, threshold=0.5)
+    assert name == "UserA"
+    assert score >= 0.5
+    
+    # Delete member
+    engine.delete_member("UserA")
+    assert not (tmp_path / "UserA").exists()
+    
+    # Reload and assert empty
+    engine.load_db()
+    assert "UserA" not in engine.cache
+
+
+def test_path_traversal_protection(tmp_path: Path) -> None:
+    engine = FaceRecognitionEngine(db_dir=tmp_path)
+    dummy_face = Image.fromarray(np.random.randint(0, 255, (160, 160, 3), dtype=np.uint8))
+    
+    # These should be rejected and return False
+    assert engine.register_member(".", dummy_face) is False
+    assert engine.register_member("..", dummy_face) is False
+    assert engine.register_member("", dummy_face) is False
+    
+    # Path extraction should keep absolute or relative traversal parts safe (only using name)
+    assert engine.register_member("/etc/passwd", dummy_face) is True
+    assert (tmp_path / "passwd").exists()
+    
+    # Try deleting with unsafe names (should not raise exceptions)
+    engine.delete_member(".")
+    engine.delete_member("..")
+    engine.delete_member("")
+
