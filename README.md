@@ -93,33 +93,5 @@ Docker giúp đóng gói và chạy ứng dụng mà không cần cấu hình Py
 
 ---
 
-## 🐙 Hướng Dẫn Đẩy Lên Git (Push to Git)
-
-Để lưu trữ mã nguồn và chia sẻ dự án lên GitHub/GitLab:
-
-1. **Khởi tạo và thêm các file vào Git**:
-   ```bash
-   git add .
-   ```
-   *(Thư mục `__pycache__`, `.pytest_cache` và ảnh dữ liệu mẫu trong `data/` sẽ tự động bị bỏ qua nhờ file `.gitignore`)*
-
-2. **Tạo Commit**:
-   ```bash
-   git commit -m "feat: complete face recognition streamlit app with guided 5-angle registration"
-   ```
-
-3. **Thêm Remote Repository (Nếu chưa cấu hình)**:
-   ```bash
-   git remote add origin <URL_KHO_LƯU_TRỮ_GIT>
-   ```
-
-4. **Đẩy mã nguồn lên nhánh chính**:
-   ```bash
-   git branch -M main
-   git push -u origin main
-   ```
-
----
-
 > [!WARNING]
 > **Độ bảo mật**: Hệ thống đã được tích hợp bộ lọc chống tấn công ghi đè và duyệt ngược thư mục (Path Traversal) qua tên đăng ký. Tuy nhiên, hãy đảm bảo rằng tên thành viên chỉ chứa các ký tự chữ cái không dấu, số, hoặc dấu gạch ngang/gạch dưới để hệ thống hoạt động ổn định nhất.
