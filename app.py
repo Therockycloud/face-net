@@ -59,7 +59,7 @@ with tab1:
             
             with st.spinner("Đang phát hiện và nhận diện khuôn mặt..."):
                 # Detect face
-                cropped_face, bbox = engine.detect_face(pil_img)
+                cropped_face, bbox, face_count = engine.detect_face(pil_img)
                 
                 if cropped_face is not None:
                     # Recognize face
@@ -144,37 +144,149 @@ with tab2:
 with tab3:
     st.header("Đăng Ký Thành Viên Mới")
     
-    new_name = st.text_input("Nhập Tên Thành Viên (Không dấu, không khoảng trắng đặc biệt):")
-    reg_source = st.radio("Chọn nguồn đăng ký:", ["Chụp qua Webcam", "Upload file ảnh mẫu"])
+    # 5 angles defined
+    STEPS = [
+        {"label": "Chính giữa (Nhìn thẳng vào camera)", "filename": "front.png"},
+        {"label": "Quay đầu sang bên TRÁI", "filename": "left.png"},
+        {"label": "Quay đầu sang bên PHẢI", "filename": "right.png"},
+        {"label": "Ngẩng đầu LÊN TRÊN", "filename": "up.png"},
+        {"label": "Cúi đầu XUỐNG DƯỚI", "filename": "down.png"}
+    ]
     
-    reg_file = None
-    if reg_source == "Chụp qua Webcam":
-        reg_file = st.camera_input("Chụp ảnh chân dung của thành viên")
-    else:
-        reg_file = st.file_uploader("Upload ảnh chân dung:", type=["jpg", "png", "jpeg"], key="reg_upload")
+    # Initialize registration states
+    if 'reg_name' not in st.session_state:
+        st.session_state.reg_name = ""
+    if 'reg_step' not in st.session_state:
+        st.session_state.reg_step = 0
+    if 'reg_images' not in st.session_state:
+        st.session_state.reg_images = []
         
-    if st.button("Đăng Ký"):
-        if not new_name.strip():
-            st.error("Vui lòng điền tên trước khi đăng ký.")
-        elif not re.match(r"^[a-zA-Z0-9_ -]+$", new_name.strip()):
-            st.error("Tên thành viên chỉ được chứa các ký tự chữ cái không dấu, số, dấu gạch ngang, gạch dưới hoặc khoảng trắng.")
-        elif reg_file is None:
-            st.error("Vui lòng chụp hoặc tải ảnh lên để đăng ký.")
+    # Reset helper
+    def reset_registration_state():
+        st.session_state.reg_name = ""
+        st.session_state.reg_step = 0
+        st.session_state.reg_images = []
+
+    # Display registration messages if they exist
+    if 'reg_success_message' in st.session_state:
+        st.success(st.session_state.reg_success_message)
+        del st.session_state.reg_success_message
+    if 'reg_error_message' in st.session_state:
+        st.error(st.session_state.reg_error_message)
+        del st.session_state.reg_error_message
+
+    # Show form if registration name is not locked yet
+    if not st.session_state.reg_name:
+        new_name = st.text_input("Nhập Tên Thành Viên (Chữ cái không dấu, số, gạch ngang, gạch dưới):")
+        reg_source = st.radio("Chọn nguồn đăng ký:", ["Chụp 5 góc qua Webcam", "Upload file ảnh mẫu (Chọn 1 hoặc nhiều file)"])
+        
+        if reg_source == "Chụp 5 góc qua Webcam":
+            if st.button("Bắt đầu đăng ký góc mặt"):
+                cleaned_name = new_name.strip()
+                if not cleaned_name:
+                    st.error("Vui lòng điền tên trước khi bắt đầu.")
+                elif not re.match(r"^[a-zA-Z0-9_ -]+$", cleaned_name):
+                    st.error("Tên thành viên chỉ được chứa các ký tự chữ cái không dấu, số, dấu gạch ngang, gạch dưới hoặc khoảng trắng.")
+                else:
+                    # Lock name and start step 0
+                    st.session_state.reg_name = cleaned_name
+                    st.session_state.reg_step = 0
+                    st.session_state.reg_images = []
+                    st.rerun()
         else:
-            try:
-                pil_img = Image.open(reg_file).convert("RGB")
-                with st.spinner("Đang phân tích khuôn mặt..."):
-                    # Check face detection
-                    cropped_face, bbox = engine.detect_face(pil_img)
+            # File Upload Source (supports multiple files)
+            reg_files = st.file_uploader("Upload ảnh chân dung mẫu (có thể chọn nhiều file):", type=["jpg", "png", "jpeg"], accept_multiple_files=True, key="reg_multi_upload")
+            
+            if st.button("Đăng Ký qua Ảnh File"):
+                cleaned_name = new_name.strip()
+                if not cleaned_name:
+                    st.error("Vui lòng điền tên trước khi đăng ký.")
+                elif not re.match(r"^[a-zA-Z0-9_ -]+$", cleaned_name):
+                    st.error("Tên thành viên chỉ được chứa các ký tự chữ cái không dấu, số, dấu gạch ngang, gạch dưới hoặc khoảng trắng.")
+                elif not reg_files:
+                    st.error("Vui lòng tải lên ít nhất một ảnh để đăng ký.")
+                else:
+                    valid_crops = []
+                    for f in reg_files:
+                        try:
+                            pil_img = Image.open(f).convert("RGB")
+                            cropped_face, _, face_count = engine.detect_face(pil_img)
+                            if face_count == 1:
+                                if cropped_face is not None:
+                                    valid_crops.append(cropped_face)
+                            else:
+                                st.warning(f"File {f.name} bị bỏ qua vì không chứa đúng 1 khuôn mặt (tìm thấy {face_count} khuôn mặt).")
+                        except Exception as e:
+                            st.warning(f"Lỗi khi xử lý file {f.name}: {e}")
                     
-                    if cropped_face is not None:
-                        success = engine.register_member(new_name.strip(), cropped_face)
-                        if success:
-                            st.success(f"Đăng ký thành công thành viên: **{new_name.strip()}**!")
-                            st.image(cropped_face, caption="Khuôn mặt đã lưu trữ", width=160)
-                        else:
-                            st.error("Không thể đăng ký thành viên. Vui lòng thử lại.")
+                    if not valid_crops:
+                        st.error("Không phát hiện thấy khuôn mặt hợp lệ trong bất kỳ ảnh nào được tải lên. Hãy chọn ảnh rõ mặt.")
                     else:
-                        st.error("Không thể phát hiện khuôn mặt nào trong ảnh đăng ký. Hãy chụp chính diện rõ mặt.")
-            except Exception as e:
-                st.error(f"Lỗi đăng ký: {e}")
+                        success_count = 0
+                        for crop in valid_crops:
+                            if engine.register_member(cleaned_name, crop):
+                                success_count += 1
+                        
+                        if success_count > 0:
+                            st.session_state.reg_success_message = f"Đăng ký thành công thành viên: **{cleaned_name}** với {success_count} ảnh mẫu hợp lệ!"
+                            if 'reg_multi_upload' in st.session_state:
+                                st.session_state.reg_multi_upload = []
+                            st.rerun()
+                        else:
+                            st.error("Đăng ký thất bại. Không thể lưu bất kỳ khuôn mặt nào vào cơ sở dữ liệu.")
+    else:
+        # Guided Webcam Capture Flow in progress
+        st.markdown(f"### Đang đăng ký góc mặt cho thành viên: **{st.session_state.reg_name}**")
+        
+        step_idx = st.session_state.reg_step
+        if step_idx < 5:
+            current_step = STEPS[step_idx]
+            
+            # Progress bar
+            st.progress((step_idx) / 5)
+            st.info(f"**Bước {step_idx + 1}/5**: Vui lòng chụp góc mặt: **{current_step['label']}**")
+            
+            # Camera snapshot
+            reg_file = st.camera_input(f"Chụp góc: {current_step['label']}", key=f"cam_step_{step_idx}")
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("Hủy đăng ký", key="cancel_reg"):
+                    reset_registration_state()
+                    st.rerun()
+            
+            if reg_file is not None:
+                try:
+                    pil_img = Image.open(reg_file).convert("RGB")
+                    cropped_face, bbox, face_count = engine.detect_face(pil_img)
+                    if face_count == 1:
+                        if cropped_face is not None:
+                            with col2:
+                                if st.button(f"Lưu góc chụp: {current_step['label']}", key=f"save_step_{step_idx}"):
+                                    # Save cropped image and its filename into session state
+                                    st.session_state.reg_images.append((cropped_face, current_step['filename']))
+                                    st.session_state.reg_step += 1
+                                    st.rerun()
+                            st.image(cropped_face, caption="Ảnh mặt cắt được hợp lệ", width=160)
+                    elif face_count == 0:
+                        st.error("Không thể phát hiện khuôn mặt nào trong ảnh. Hãy thử lại.")
+                    else:
+                        st.error("Phát hiện nhiều hơn 1 khuôn mặt. Ảnh đăng ký chỉ được phép chứa duy nhất 1 khuôn mặt.")
+                except Exception as e:
+                    st.error(f"Lỗi: {e}")
+        else:
+            # All 5 steps completed - Save images
+            with st.spinner("Đang lưu các khuôn mặt đã chụp vào cơ sở dữ liệu..."):
+                success_count = 0
+                for crop, filename in st.session_state.reg_images:
+                    if engine.register_member(st.session_state.reg_name, crop, filename=filename):
+                        success_count += 1
+            
+            if success_count > 0:
+                st.session_state.reg_success_message = f"Đăng ký thành công thành viên: **{st.session_state.reg_name}** với đủ {success_count}/5 góc mặt mẫu!"
+            else:
+                st.session_state.reg_error_message = f"Đăng ký thành viên thất bại. Không lưu được góc mặt nào."
+            
+            # Reset state
+            reset_registration_state()
+            st.rerun()

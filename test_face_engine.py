@@ -13,9 +13,10 @@ def test_detect_face_returns_none_for_blank_image(tmp_path: Path) -> None:
     engine = FaceRecognitionEngine(db_dir=tmp_path)
     # Create a blank black image
     blank_img = Image.fromarray(np.zeros((200, 200, 3), dtype=np.uint8))
-    cropped_face, bbox = engine.detect_face(blank_img)
+    cropped_face, bbox, face_count = engine.detect_face(blank_img)
     assert cropped_face is None
     assert bbox is None
+    assert face_count == 0
 
 def test_get_embedding_returns_512_dimensional_tensor(tmp_path: Path) -> None:
     engine = FaceRecognitionEngine(db_dir=tmp_path)
@@ -91,4 +92,11 @@ def test_path_traversal_protection(tmp_path: Path) -> None:
     engine.delete_member(".")
     engine.delete_member("..")
     engine.delete_member("")
+
+
+def test_count_faces(tmp_path: Path) -> None:
+    engine = FaceRecognitionEngine(db_dir=tmp_path)
+    blank_img = Image.fromarray(np.zeros((200, 200, 3), dtype=np.uint8))
+    assert engine.count_faces(blank_img) == 0
+
 
