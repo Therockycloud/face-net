@@ -18,9 +18,8 @@ Một giải pháp nhận diện khuôn mặt cục bộ (On-premise Face Recogn
 3. [Cấu Trúc Thư Mục Dữ Liệu](#-cấu-trúc-thư-mục-dữ-liệu)
 4. [Hướng Dẫn Cài Đặt Nhanh](#-hướng-dẫn-cài-đặt-nhanh)
 5. [Đóng Gói với Docker](#-đóng-gói-với-docker)
-6. [Quản Lý Mã Nguồn Git](#-quản-lý-mã-nguồn-git)
-7. [Kiểm Thử (Unit Tests)](#-kiểm-thử-unit-tests)
-8. [Giấy Phép](#-giấy-phép)
+6. [Kiểm Thử (Unit Tests)](#-kiểm-thử-unit-tests)
+7. [Giấy Phép](#-giấy-phép)
 
 ---
 
@@ -111,30 +110,6 @@ docker start face-rec-container
 # Xóa bỏ container hoàn toàn (không ảnh hưởng dữ liệu data mẫu)
 docker stop face-rec-container && docker rm face-rec-container
 ```
-
----
-
-## 🐙 Quản lý mã nguồn Git
-
-Để đồng bộ dự án lên GitHub cá nhân của bạn:
-
-```bash
-# 1. Thêm tất cả file vào staging
-git add .
-
-# 2. Tạo commit
-git commit -m "feat: complete face recognition dashboard with guided 5-angle capture"
-
-# 3. Liên kết tới kho chứa từ xa
-git remote add origin https://github.com/Therockycloud/face-net
-
-# 4. Đẩy mã nguồn lên nhánh main (Force-push nếu cần ghi đè)
-git branch -M main
-git push -f -u origin main
-```
-
-> [!IMPORTANT]
-> Dự án đã cấu hình sẵn `.gitignore` để bỏ qua các thư mục cache của python (`__pycache__/`), pytest (`.pytest_cache/`), thư mục test tạm thời (`test_data/`) và thư mục tài liệu thiết kế (`docs/`).
 
 ---
 
